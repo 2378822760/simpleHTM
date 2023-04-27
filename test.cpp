@@ -1,6 +1,6 @@
 #include "encoder.hpp"
-#include "newsp.hpp"
-
+#include "SpatialPooler.hpp"
+#include "TemporalMemory.hpp"
 #include <iostream>
 #include <cstdio>
 
@@ -32,33 +32,34 @@ void printCodedDate(UInt inputVector[], UInt vectorSize) {
 }
 
 int main() {
+	/* Input */
 	double date[] = { 10,10.5,11,11.5,12,12.5,13,14,15,16,17,18,19 };
 	int arraySize = sizeof(date) / sizeof(double);
 	double minElement, maxElement;
-
 	getArrayRange(date, arraySize, minElement, maxElement);
 
-	// 创建实例
+
 	ScalarEncoder encoder = ScalarEncoder(5, 10, 20, 20, true);
-	// 获取输出长度
+
 	UInt output_width = encoder.getOutputWidth();
 	cout << "output_width:" << output_width << endl;
 
-	// 初始化SP
-	vector<UInt> inputDimensions = {output_width}, columnDimensions = {output_width};
+	vector<UInt> inputDimensions = {output_width}, columnDimensions = {50};
 
 	SpatialPooler sp(inputDimensions, columnDimensions);
-	// 存储数据编码后的内容
+	TemporalMemory tm({ columnDimensions });
+
 	UInt* inputVector = (UInt*)calloc(output_width, sizeof(UInt));
-	UInt* columnVector = (UInt*)calloc(output_width, sizeof(UInt));
-	// 初始化一个空间池
+	UInt* columnVector = (UInt*)calloc(50, sizeof(UInt));
+
 	for (int i = 0; i < arraySize; ++i) {
 		cout << "iteration:" << i + 1 << endl;
 		memset(inputVector, 0, sizeof(UInt)*output_width);
 		encoder.encodeIntoArray(date[i], inputVector);
 		printCodedDate(inputVector, output_width);
 		sp.compute(inputVector, true, columnVector);
-		printCodedDate(columnVector, output_width);
+		printCodedDate(columnVector, 50);
+		tm.compute(50, columnVector);
 	}
 	
 
